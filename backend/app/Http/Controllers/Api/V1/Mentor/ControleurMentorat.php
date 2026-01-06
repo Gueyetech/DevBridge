@@ -151,11 +151,23 @@ class ControleurMentorat extends ControleurApiBase
             ->whereMonth('date_debut', now()->month)
             ->count(),
             'feedback_donnes' => FeedbackMentor::where('mentor_id', $mentor->id)->count(),
-            'temps_total_mentorat' => SessionMentorat::whereHas('mentorat', function($query) use ($mentor) {
-                $query->where('mentor_id', $mentor->id);
-            })
-            ->where('statut', 'termine')
-            ->sum(\DB::raw('TIMESTAMPDIFF(MINUTE, date_debut, date_fin)')),
+            // Correction SQLite : calculer la durée totale en minutes en PHP
+            'temps_total_mentorat' => (function() use ($mentor) {
+                $sessions = SessionMentorat::whereHas('mentorat', function($query) use ($mentor) {
+                        $query->where('mentor_id', $mentor->id);
+                    })
+                    ->where('statut', 'termine')
+                    ->get(['date_debut', 'date_fin']);
+                $total = 0;
+                foreach ($sessions as $session) {
+                    if ($session->date_debut && $session->date_fin) {
+                        $debut = \Carbon\Carbon::parse($session->date_debut);
+                        $fin = \Carbon\Carbon::parse($session->date_fin);
+                        $total += $fin->diffInMinutes($debut);
+                    }
+                }
+                return $total;
+            })(),
         ];
         
         return $this->reponseSucces([
@@ -402,12 +414,24 @@ class ControleurMentorat extends ControleurApiBase
             ->where('date_debut', '>=', $dateDebut)
             ->count(),
             
-            'temps_total_mentorat' => SessionMentorat::whereHas('mentorat', function($query) use ($mentor) {
-                $query->where('mentor_id', $mentor->id);
-            })
-            ->where('statut', 'termine')
-            ->where('date_debut', '>=', $dateDebut)
-            ->sum(\DB::raw('TIMESTAMPDIFF(MINUTE, date_debut, date_fin)')),
+            // Correction SQLite : calculer la durée totale en minutes en PHP
+            'temps_total_mentorat' => (function() use ($mentor, $dateDebut) {
+                $sessions = SessionMentorat::whereHas('mentorat', function($query) use ($mentor) {
+                        $query->where('mentor_id', $mentor->id);
+                    })
+                    ->where('statut', 'termine')
+                    ->where('date_debut', '>=', $dateDebut)
+                    ->get(['date_debut', 'date_fin']);
+                $total = 0;
+                foreach ($sessions as $session) {
+                    if ($session->date_debut && $session->date_fin) {
+                        $debut = \Carbon\Carbon::parse($session->date_debut);
+                        $fin = \Carbon\Carbon::parse($session->date_fin);
+                        $total += $fin->diffInMinutes($debut);
+                    }
+                }
+                return $total;
+            })(),
             
             'feedback_donnes' => FeedbackMentor::where('mentor_id', $mentor->id)
                 ->where('created_at', '>=', $dateDebut)
@@ -428,8 +452,63 @@ class ControleurMentorat extends ControleurApiBase
             ? round($statistiques['temps_total_mentorat'] / $statistiques['sessions_terminees'], 2)
             : 0;
         
+        // Sessions terminées par mois (12 derniers mois)
+        $sessionsParMois = [];
+        for ($i = 11; $i >= 0; $i--) {
+            $date = now()->subMonths($i);
+            $mois = $date->format('M');
+            $count = SessionMentorat::whereHas('mentorat', function($query) use ($mentor) {
+                    $query->where('mentor_id', $mentor->id);
+                })
+                ->where('statut', 'termine')
+                ->whereMonth('date_debut', $date->month)
+                ->whereYear('date_debut', $date->year)
+                ->count();
+            $sessionsParMois[] = ['mois' => $mois, 'sessions' => $count];
+        }
+
+        // Compétences validées par type
+        $competencesParType = \DB::table('competences_utilisateurs')
+            ->join('competences', 'competences_utilisateurs.competence_id', '=', 'competences.id')
+            ->select('competences.categorie as type', \DB::raw('count(*) as value'))
+            ->where('competences_utilisateurs.valide_par', $mentor->id)
+            ->groupBy('competences.categorie')
+            ->get()
+            ->map(function($row) {
+                return ['name' => $row->type, 'value' => $row->value];
+            });
+
+        // Progression moyenne par mois (calculée dynamiquement)
+        $progressionMoyenneParMois = [];
+        for ($i = 11; $i >= 0; $i--) {
+            $date = now()->subMonths($i);
+            $mois = $date->format('M');
+            $mentorats = \App\Models\Mentorat::where('mentor_id', $mentor->id)
+                ->whereMonth('accepte_a', $date->month)
+                ->whereYear('accepte_a', $date->year)
+                ->where('statut', 'accepte')
+                ->get();
+            $progressions = [];
+            foreach ($mentorats as $mentorat) {
+                $etudiant = $mentorat->etudiant;
+                if ($etudiant && method_exists($etudiant, 'parcoursInscrits')) {
+                    $parcours = $etudiant->parcoursInscrits()->get();
+                    foreach ($parcours as $p) {
+                        if (isset($p->pivot->progression_pourcentage)) {
+                            $progressions[] = $p->pivot->progression_pourcentage;
+                        }
+                    }
+                }
+            }
+            $progression = count($progressions) > 0 ? array_sum($progressions) / count($progressions) : 0;
+            $progressionMoyenneParMois[] = ['mois' => $mois, 'progression' => round($progression, 2)];
+        }
+
         return $this->reponseSucces([
             'statistiques' => $statistiques,
+            'sessions_par_mois' => $sessionsParMois,
+            'competences_par_type' => $competencesParType,
+            'progression_moyenne_par_mois' => $progressionMoyenneParMois,
             'periode' => $depuis,
         ]);
     }

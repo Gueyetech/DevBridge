@@ -309,7 +309,7 @@ Route::middleware(['auth:sanctum', 'role:administrateur'])->prefix('admin')->gro
         
         Route::get('/sauvegardes', [ControleurAnalytiques::class, 'sauvegardes'])
             ->name('api.v1.admin.systeme.sauvegardes');
-        
+
         Route::post('/sauvegardes/creer', [ControleurAnalytiques::class, 'creerSauvegarde'])
             ->name('api.v1.admin.systeme.sauvegardes.creer');
         

@@ -183,7 +183,7 @@ export default function ParametresPage() {
   const handleCreerSauvegarde = async () => {
     setIsCreatingSauvegarde(true);
     try {
-      await apiClient.post("/v1/admin/systeme/sauvegardes");
+      await apiClient.post("/v1/admin/systeme/sauvegardes/creer");
       toast.success("Sauvegarde créée avec succès");
       fetchSauvegardes();
     } catch (error) {

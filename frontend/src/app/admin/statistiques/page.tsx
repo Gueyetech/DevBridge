@@ -535,10 +535,20 @@ export default function StatistiquesPage() {
                       expert: "Expert",
                     };
                     return (
-                      <div key={niveau} className="flex items-center gap-3">
-                        <div className={`w-3 h-3 rounded-full ${colors[niveau] || "bg-gray-500"}`} />
-                        <span className="flex-1 text-sm">{labels[niveau] || niveau}</span>
-                        <Badge variant="outline">{count}</Badge>
+                      <div
+                        key={niveau}
+                        className={`flex items-center gap-4 px-4 py-2 rounded-lg shadow-sm transition-colors hover:bg-muted/40 ${colors[niveau] || "bg-gray-100"}`}
+                      >
+                        <div className={`w-7 h-7 flex items-center justify-center rounded-full ${colors[niveau] || "bg-gray-500"}`}>
+                          <span className="text-white font-bold text-xs">{labels[niveau]?.charAt(0) || niveau.charAt(0)}</span>
+                        </div>
+                        <span className="flex-1 text-base font-medium text-muted-foreground">{labels[niveau] || niveau}</span>
+                        <Badge
+                          variant="outline"
+                          className="text-base px-4 py-2 font-semibold border-2 border-primary/40 bg-primary/10 text-primary shadow"
+                        >
+                          {typeof count === 'object' && count !== null && 'total' in count ? count.total : count}
+                        </Badge>
                       </div>
                     );
                   })}

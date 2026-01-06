@@ -142,11 +142,11 @@ export default function VoirParcoursPage() {
   const fetchParcours = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await apiClient.get(`/v1/admin/parcours/${id}`);
+      const response = await apiClient.get(`/v1/admin/parcours/${id}`) as { data: { parcours: Parcours; statistiques: Statistiques } };
       setParcours(response.data.parcours);
       setStatistiques(response.data.statistiques);
       // Expand first module by default
-      if (response.data.parcours.modules?.length > 0) {
+      if (response.data.parcours.modules && response.data.parcours.modules.length > 0) {
         setExpandedModules([response.data.parcours.modules[0].id]);
       }
     } catch (error) {
@@ -177,7 +177,7 @@ export default function VoirParcoursPage() {
       const endpoint = parcours.est_publie
         ? `/v1/admin/parcours/${id}/depublier`
         : `/v1/admin/parcours/${id}/publier`;
-      
+
       await apiClient.post(endpoint);
       toast.success(parcours.est_publie ? "Parcours dépublié" : "Parcours publié");
       fetchParcours();
@@ -588,7 +588,7 @@ export default function VoirParcoursPage() {
                                   {module.lecons.length} leçon(s)
                                 </Badge>
                                 <Badge variant="outline">
-                                  {module.duree_estimee_minutes || 
+                                  {module.duree_estimee_minutes ||
                                     module.lecons.reduce((sum, l) => sum + l.duree_estimee_minutes, 0)} min
                                 </Badge>
                               </div>
@@ -689,7 +689,7 @@ export default function VoirParcoursPage() {
                         {Math.round(
                           ((statistiques?.inscrits || 0) *
                             (statistiques?.taux_completion || 0)) /
-                            100
+                          100
                         )}
                       </div>
                       <div className="text-sm text-muted-foreground">

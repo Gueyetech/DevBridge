@@ -21,10 +21,11 @@ import {
 
 const mentorNavItems: NavItem[] = [
   { url: "/mentor", title: "Tableau de bord", icon: LayoutDashboard },
-  { url: "/mentor/etudiants", title: "Mes étudiants", icon: Users },
+  { url: "/mentor/demandes", title: "Demandes", icon: MessageSquare },
+  { url: "/mentor/etudiants", title: "Étudiants", icon: Users },
   { url: "/mentor/sessions", title: "Sessions", icon: Calendar },
-  { url: "/mentor/messages", title: "Messages", icon: MessageSquare },
-  { url: "/mentor/ressources", title: "Ressources", icon: FileText },
+  { url: "/mentor/competences", title: "Compétences", icon: FileText },
+  { url: "/mentor/disponibilites", title: "Disponibilités", icon: Calendar },
 ];
 
 export default function MentorLayout({ children }: { children: ReactNode }) {

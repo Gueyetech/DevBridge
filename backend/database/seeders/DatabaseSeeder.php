@@ -38,5 +38,21 @@ class DatabaseSeeder extends Seeder
             'email' => 'etudiant@devbridge.com',
             'role' => 'etudiant',
         ]);
+
+        // Appeler les seeders personnalisés
+        $this->call([
+            MentorSenegalSeeder::class,
+            ParcoursSeeder::class,
+            BadgeSeeder::class,
+            BadgeUtilisateurSeeder::class,
+            ProjetSeeder::class,
+            QuizSeeder::class,
+            ClassementSeeder::class,
+            NotificationSeeder::class,
+            LogActiviteSeeder::class,
+            DefiSeeder::class,
+            CertificatSeeder::class,
+            DemandeRevisionCodeSeeder::class,
+        ]);
     }
 }

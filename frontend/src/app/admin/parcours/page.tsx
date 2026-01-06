@@ -550,7 +550,7 @@ export default function ParcoursPage() {
                             </Tooltip>
                             <Tooltip>
                               <TooltipTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEditDialog(p)}>
+                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => router.push(`/admin/parcours/${p.id}/modifier`)}>
                                   <Edit className="h-4 w-4" />
                                 </Button>
                               </TooltipTrigger>
@@ -998,7 +998,7 @@ export default function ParcoursPage() {
             </ScrollArea>
             <DialogFooter>
               <Button variant="outline" onClick={() => setShowViewDialog(false)}>Fermer</Button>
-              <Button onClick={() => { setShowViewDialog(false); openEditDialog(selectedParcours!); }}>
+              <Button onClick={() => { setShowViewDialog(false); router.push(`/admin/parcours/${selectedParcours?.id}/modifier`); }}>
                 <Edit className="h-4 w-4 mr-2" />
                 Modifier
               </Button>
