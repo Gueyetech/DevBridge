@@ -52,7 +52,8 @@ export default function MentorDemandesPage() {
   // Pagination
   const [page, setPage] = useState(1);
   const pageSize = 5;
-  // Liste unique des projets pour le filtre
+  // Statistiques depuis le backend
+  const [stats, setStats] = useState<{ total: number; en_attente: number; en_cours: number; refusee: number; terminees: number }>({ total: 0, en_attente: 0, en_cours: 0, refusee: 0, terminees: 0 });
   // Application des filtres
   const filteredDemandes = demandes.filter(d =>
     (statutFilter === "all" ? true : d.statut === statutFilter) &&
@@ -100,11 +101,21 @@ export default function MentorDemandesPage() {
     setActionLoading(false);
   };
 
+
   useEffect(() => {
+    setIsLoading(true);
     apiClient.get("/v1/mentor/revision-code/demandes")
       .then((res: any) => {
-        // Correction : la réponse est dans res.data.demandes
         setDemandes(res.data?.demandes || []);
+        if (res.data?.statistiques) {
+          setStats({
+            total: res.data.statistiques.total ?? 0,
+            en_attente: res.data.statistiques.en_attente ?? 0,
+            en_cours: res.data.statistiques.en_cours ?? 0,
+            refusee: res.data.statistiques.refusees ?? 0,
+            terminees: res.data.statistiques.terminees ?? 0,
+          });
+        }
         setIsLoading(false);
       })
       .catch(() => {
@@ -170,7 +181,7 @@ export default function MentorDemandesPage() {
           <CardContent className="flex items-center gap-3 p-0 px-4">
             <div className="p-2 rounded-full bg-emerald-500/10"><UserX className="h-4 w-4 text-emerald-500" /></div>
             <div>
-              <p className="text-2xl font-bold">{demandes.filter(d => d.statut === "refusee").length}</p>
+              <p className="text-2xl font-bold">{stats.refusee}</p>
               <p className="text-xs text-muted-foreground">Refusées</p>
             </div>
           </CardContent>
@@ -205,11 +216,11 @@ export default function MentorDemandesPage() {
             </Select>
           </div>
         </div>
-        <div className="flex flex-col gap-1 min-w-[140px]">
+        <div className="flex flex-col gap-1 min-w-35">
           <Label htmlFor="urgence" className="text-xs font-medium text-muted-foreground mb-1 pl-1">Urgence</Label>
           <div className="flex items-center gap-2">
             <Select value={urgenceFilter} onValueChange={v => { setUrgenceFilter(v); setPage(1); }}>
-              <SelectTrigger className="min-w-[110px] bg-white/80 border border-border rounded-md shadow-xs" id="urgence">
+              <SelectTrigger className="min-w-27.5 bg-white/80 border border-border rounded-md shadow-xs" id="urgence">
                 <SelectValue placeholder="Toutes" />
               </SelectTrigger>
               <SelectContent>
@@ -221,7 +232,7 @@ export default function MentorDemandesPage() {
             </Select>
           </div>
         </div>
-        <div className="flex flex-col gap-1 flex-1 min-w-[180px]">
+        <div className="flex flex-col gap-1 flex-1 min-w-45">
           <Label htmlFor="search" className="text-xs font-medium text-muted-foreground mb-1 pl-1">Recherche</Label>
           <div className="flex items-center gap-2">
             <Input id="search" className="bg-white/80 border border-border rounded-md shadow-xs" placeholder="Titre ou étudiant..." value={search} onChange={e => { setSearch(e.target.value); setPage(1); }} />
@@ -342,7 +353,7 @@ export default function MentorDemandesPage() {
                   <h3 className="font-semibold mb-2">Révision(s) :</h3>
                   {selected.revisions.map((rev, idx) => (
                     <div key={rev.id} className="border rounded p-2 mb-2">
-                      <div className="text-xs mb-1">Statut : <Badge variant={rev.statut === "termine" ? "default" : rev.statut === "refuse" ? "destructive" : "outline"}>{rev.statut}</Badge></div>
+                      <div className="text-xs mb-1">Statut : <Badge variant={rev.statut === "termine" ? "default" : rev.statut === "refusee" ? "destructive" : "outline"}>{rev.statut}</Badge></div>
                       {rev.commentaires && <div className="text-xs">Commentaires : {JSON.stringify(rev.commentaires)}</div>}
                       {rev.points_positifs && <div className="text-xs">Points positifs : {rev.points_positifs.join(", ")}</div>}
                       {rev.points_amelioration && <div className="text-xs">À améliorer : {rev.points_amelioration.join(", ")}</div>}
@@ -387,7 +398,7 @@ export default function MentorDemandesPage() {
                 {history.map((rev) => (
                   <div key={rev.id} className="border rounded p-3">
                     <div className="flex items-center gap-2 mb-2">
-                      <Badge variant={rev.statut === "termine" ? "default" : rev.statut === "refuse" ? "destructive" : "outline"}>{rev.statut}</Badge>
+                      <Badge variant={rev.statut === "termine" ? "default" : rev.statut === "refusee" ? "destructive" : "outline"}>{rev.statut}</Badge>
                       {rev.note_generale !== undefined && <span className="text-xs">Note : {rev.note_generale}/5</span>}
                     </div>
                     {rev.commentaires && <div className="text-xs">Commentaires : {JSON.stringify(rev.commentaires)}</div>}

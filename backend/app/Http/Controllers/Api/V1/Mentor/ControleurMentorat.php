@@ -126,7 +126,7 @@ class ControleurMentorat extends ControleurApiBase
             // Calculer la progression moyenne
             $progression = $etudiant->parcoursInscrits()
                 ->wherePivot('termine_a', null)
-                ->avg('pivot.progression_pourcentage') ?? 0;
+                ->avg('progression_pourcentage') ?? 0;
             
             // Dernière activité
             $derniereActivite = $etudiant->suiviTemps()
@@ -413,7 +413,7 @@ class ControleurMentorat extends ControleurApiBase
             ->where('statut', 'termine')
             ->where('date_debut', '>=', $dateDebut)
             ->count(),
-            
+
             // Correction SQLite : calculer la durée totale en minutes en PHP
             'temps_total_mentorat' => (function() use ($mentor, $dateDebut) {
                 $sessions = SessionMentorat::whereHas('mentorat', function($query) use ($mentor) {
@@ -432,19 +432,24 @@ class ControleurMentorat extends ControleurApiBase
                 }
                 return $total;
             })(),
-            
+
             'feedback_donnes' => FeedbackMentor::where('mentor_id', $mentor->id)
                 ->where('created_at', '>=', $dateDebut)
                 ->count(),
-            
+
             'competences_validees' => \DB::table('competences_utilisateurs')
                 ->where('valide_par', $mentor->id)
                 ->where('valide_a', '>=', $dateDebut)
                 ->count(),
-            
+
             'nouveaux_etudiants' => Mentorat::where('mentor_id', $mentor->id)
                 ->where('statut', 'accepte')
                 ->where('accepte_a', '>=', $dateDebut)
+                ->count(),
+
+            // Ajout du total d'étudiants mentorés (tous statuts acceptés)
+            'total_etudiants' => Mentorat::where('mentor_id', $mentor->id)
+                ->where('statut', 'accepte')
                 ->count(),
         ];
         

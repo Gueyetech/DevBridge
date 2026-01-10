@@ -68,7 +68,8 @@ class ControleurRevisionCode extends ControleurApiBase
             'total' => DemandeRevisionCode::count(),
             'en_attente' => DemandeRevisionCode::where('statut', 'en_attente')->count(),
             'en_cours' => DemandeRevisionCode::where('statut', 'en_cours')->count(),
-            'terminees' => DemandeRevisionCode::where('statut', 'termine')->count(),
+            'terminees' => DemandeRevisionCode::where('statut', 'terminee')->count(),
+            'refusees' => RevisionCode::where('mentor_id', $mentor->id)->where('statut', 'refusee')->count(),
             'mes_revisions' => RevisionCode::where('mentor_id', $mentor->id)->count(),
         ];
         
@@ -135,7 +136,6 @@ class ControleurRevisionCode extends ControleurApiBase
         // Mettre à jour le statut de la demande
         $demande->update([
             'statut' => 'en_cours',
-            'mentor_assignee' => $mentor->id,
         ]);
         
         // Notifier l'étudiant
@@ -164,7 +164,7 @@ class ControleurRevisionCode extends ControleurApiBase
         RevisionCode::create([
             'demande_id' => $demande->id,
             'mentor_id' => $mentor->id,
-            'statut' => 'refuse',
+            'statut' => 'refusee',
             'commentaire' => $requete->raison,
             'refuse_a' => now(),
         ]);
@@ -365,16 +365,16 @@ class ControleurRevisionCode extends ControleurApiBase
             return false;
         }
         
-        // Vérifier les compétences si nécessaire
-        if ($demande->competences_ciblees && !empty($demande->competences_ciblees)) {
-            $competencesMentor = $mentor->competences()->pluck('competences.id')->toArray();
-            
-            foreach ($demande->competences_ciblees as $competenceId) {
-                if (!in_array($competenceId, $competencesMentor)) {
-                    return false;
-                }
-            }
-        }
+        // // Vérifier les compétences si nécessaire
+        // if ($demande->competences_ciblees && !empty($demande->competences_ciblees)) {
+        //     $competencesMentor = $mentor->competences()->pluck('competences.id')->map(fn($id) => (string)$id)->toArray();
+        //     $ciblees = is_array($demande->competences_ciblees) ? $demande->competences_ciblees : json_decode($demande->competences_ciblees, true);
+        //     foreach ($ciblees as $competenceId) {
+        //         if (!in_array((string)$competenceId, $competencesMentor)) {
+        //             return false;
+        //         }
+        //     }
+        // }
         
         return true;
     }

@@ -106,7 +106,7 @@ export default function MentorDashboardPage() {
               <Users className="h-4 w-4 text-cyan-500" />
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-2xl font-bold">{data.etudiants ? data.etudiants.length : 0}</p>
+              <p className="text-2xl font-bold">{data.statistiques.total_etudiants ?? 0}</p>
               <p className="text-xs text-muted-foreground">Étudiants mentorés</p>
             </div>
           </CardContent>
