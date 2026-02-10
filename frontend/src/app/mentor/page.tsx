@@ -22,12 +22,14 @@ import { useEffect, useState } from "react";
 
 type MentorDashboardApi = {
   statistiques: {
+    total_etudiants?: number;
     nouveaux_etudiants: number;
     sessions_terminees: number;
     temps_total_mentorat: number;
     temps_moyen_session: number;
     competences_validees: number;
     feedback_donnes: number;
+    [key: string]: any;
   };
   sessions_par_mois: { mois: string; sessions: number }[];
   competences_par_type: { name: string; value: number }[];
@@ -48,7 +50,7 @@ export default function MentorDashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    apiClient.get("/v1/mentor/tableau-de-bord")
+    apiClient.get<any>("/v1/mentor/tableau-de-bord")
       .then((res) => {
         setData(res.data);
         setIsLoading(false);

@@ -13,9 +13,15 @@ use App\Models\Module;
 use App\Models\Lecon;
 use App\Models\Quiz;
 use App\Models\Question;
+use App\Models\Projet;
+use App\Models\Competence;
+use App\Models\Defi;
+use App\Models\Badge;
+use App\Models\Utilisateur;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class ControleurGestionContenu extends ControleurApiBase
 {
@@ -700,5 +706,464 @@ class ControleurGestionContenu extends ControleurApiBase
         $quiz->delete();
 
         return $this->reponseSupprime();
+    }
+
+    // ==================== PROJETS ====================
+
+    /**
+     * Liste de tous les projets
+     */
+    public function projetsIndex(Request $requete): JsonResponse
+    {
+        $projets = Projet::with('createur')
+            ->withCount('membres')
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(function ($p) {
+                return [
+                    'id' => $p->id,
+                    'titre' => $p->titre,
+                    'description' => $p->description,
+                    'statut' => $p->statut,
+                    'difficulte' => $p->difficulte,
+                    'technologie' => is_array($p->technologies) ? implode(', ', $p->technologies) : $p->technologies,
+                    'nombre_membres' => $p->membres_count,
+                    'createur' => $p->createur ? [
+                        'id' => $p->createur->id,
+                        'prenom' => $p->createur->prenom,
+                        'nom' => $p->createur->nom,
+                    ] : null,
+                    'created_at' => $p->created_at,
+                ];
+            });
+
+        return $this->reponseSucces(['projets' => $projets]);
+    }
+
+    /**
+     * Afficher un projet
+     */
+    public function projetAfficher(string $id): JsonResponse
+    {
+        $projet = Projet::with(['createur', 'membres'])->withCount('membres')->findOrFail($id);
+
+        return $this->reponseSucces(['projet' => $projet]);
+    }
+
+    /**
+     * Changer le statut d'un projet
+     */
+    public function projetChangerStatut(Request $requete, string $id): JsonResponse
+    {
+        $requete->validate([
+            'statut' => 'required|string|in:en_attente,en_cours,termine,archive',
+        ]);
+
+        $projet = Projet::findOrFail($id);
+        $projet->update(['statut' => $requete->statut]);
+
+        return $this->reponseSucces([
+            'message' => 'Statut du projet mis à jour avec succès',
+            'projet' => $projet->fresh(),
+        ]);
+    }
+
+    /**
+     * Supprimer un projet
+     */
+    public function projetSupprimer(string $id): JsonResponse
+    {
+        $projet = Projet::findOrFail($id);
+        $projet->delete();
+
+        return $this->reponseSupprime();
+    }
+
+    /**
+     * Statistiques d'un projet
+     */
+    public function projetStatistiques(string $id): JsonResponse
+    {
+        $projet = Projet::with(['membres', 'taches'])->withCount(['membres', 'taches'])->findOrFail($id);
+
+        return $this->reponseSucces([
+            'projet' => $projet->titre,
+            'nombre_membres' => $projet->membres_count,
+            'nombre_taches' => $projet->taches_count,
+            'statut' => $projet->statut,
+        ]);
+    }
+
+    /**
+     * Statistiques d'un parcours
+     */
+    public function parcoursStatistiques(string $id): JsonResponse
+    {
+        $parcours = ParcoursApprentissage::withCount(['modules', 'inscriptions'])->findOrFail($id);
+
+        return $this->reponseSucces([
+            'parcours' => $parcours->titre,
+            'nombre_modules' => $parcours->modules_count,
+            'nombre_inscriptions' => $parcours->inscriptions_count,
+        ]);
+    }
+
+    // ==================== COMPÉTENCES ====================
+
+    /**
+     * Liste de toutes les compétences
+     */
+    public function competencesIndex(Request $requete): JsonResponse
+    {
+        $competences = Competence::orderBy('nom')->get();
+
+        return $this->reponseSucces(['competences' => $competences]);
+    }
+
+    /**
+     * Créer une compétence
+     */
+    public function competenceCreer(Request $requete): JsonResponse
+    {
+        $requete->validate([
+            'nom' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'categorie' => 'nullable|string|max:100',
+        ]);
+
+        $competence = Competence::create([
+            'nom' => $requete->nom,
+            'slug' => \Illuminate\Support\Str::slug($requete->nom),
+            'description' => $requete->description,
+            'categorie' => $requete->categorie,
+        ]);
+
+        return $this->reponseCree([
+            'message' => 'Compétence créée avec succès',
+            'competence' => $competence,
+        ]);
+    }
+
+    /**
+     * Afficher une compétence
+     */
+    public function competenceAfficher(string $id): JsonResponse
+    {
+        $competence = Competence::findOrFail($id);
+
+        return $this->reponseSucces(['competence' => $competence]);
+    }
+
+    /**
+     * Mettre à jour une compétence
+     */
+    public function competenceMettreAJour(Request $requete, string $id): JsonResponse
+    {
+        $requete->validate([
+            'nom' => 'sometimes|string|max:255',
+            'description' => 'nullable|string',
+            'categorie' => 'nullable|string|max:100',
+        ]);
+
+        $competence = Competence::findOrFail($id);
+        $competence->update($requete->only(['nom', 'description', 'categorie']));
+
+        return $this->reponseSucces([
+            'message' => 'Compétence mise à jour avec succès',
+            'competence' => $competence->fresh(),
+        ]);
+    }
+
+    /**
+     * Supprimer une compétence
+     */
+    public function competenceSupprimer(string $id): JsonResponse
+    {
+        $competence = Competence::findOrFail($id);
+        $competence->delete();
+
+        return $this->reponseSupprime();
+    }
+
+    // ==================== DÉFIS ====================
+
+    /**
+     * Liste de tous les défis
+     */
+    public function defisIndex(Request $requete): JsonResponse
+    {
+        $defis = Defi::withCount('participants')
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(function ($d) {
+                return [
+                    'id' => $d->id,
+                    'titre' => $d->titre,
+                    'description' => $d->description,
+                    'difficulte' => $d->difficulte,
+                    'points' => $d->points_recompense,
+                    'actif' => $d->est_actif,
+                    'date_limite' => $d->date_fin,
+                    'nombre_participants' => $d->participants_count,
+                    'created_at' => $d->created_at,
+                ];
+            });
+
+        return $this->reponseSucces(['defis' => $defis]);
+    }
+
+    /**
+     * Créer un défi
+     */
+    public function defiCreer(Request $requete): JsonResponse
+    {
+        $requete->validate([
+            'titre' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'difficulte' => 'nullable|string|in:debutant,intermediaire,avance,expert',
+            'points' => 'nullable|integer|min:0',
+            'date_limite' => 'nullable|date',
+        ]);
+
+        $defi = Defi::create([
+            'titre' => $requete->titre,
+            'slug' => \Illuminate\Support\Str::slug($requete->titre),
+            'description' => $requete->description,
+            'difficulte' => $requete->difficulte ?? 'intermediaire',
+            'points_recompense' => $requete->points ?? 100,
+            'date_fin' => $requete->date_limite,
+            'est_actif' => true,
+        ]);
+
+        return $this->reponseCree([
+            'message' => 'Défi créé avec succès',
+            'defi' => $defi,
+        ]);
+    }
+
+    /**
+     * Afficher un défi
+     */
+    public function defiAfficher(string $id): JsonResponse
+    {
+        $defi = Defi::withCount('participants')->findOrFail($id);
+
+        return $this->reponseSucces(['defi' => $defi]);
+    }
+
+    /**
+     * Mettre à jour un défi
+     */
+    public function defiMettreAJour(Request $requete, string $id): JsonResponse
+    {
+        $requete->validate([
+            'titre' => 'sometimes|string|max:255',
+            'description' => 'nullable|string',
+            'difficulte' => 'nullable|string|in:debutant,intermediaire,avance,expert',
+            'points' => 'nullable|integer|min:0',
+            'date_limite' => 'nullable|date',
+        ]);
+
+        $defi = Defi::findOrFail($id);
+        $data = $requete->only(['titre', 'description', 'difficulte']);
+        if ($requete->has('points')) $data['points_recompense'] = $requete->points;
+        if ($requete->has('date_limite')) $data['date_fin'] = $requete->date_limite;
+        $defi->update($data);
+
+        return $this->reponseSucces([
+            'message' => 'Défi mis à jour avec succès',
+            'defi' => $defi->fresh(),
+        ]);
+    }
+
+    /**
+     * Supprimer un défi
+     */
+    public function defiSupprimer(string $id): JsonResponse
+    {
+        $defi = Defi::findOrFail($id);
+        $defi->delete();
+
+        return $this->reponseSupprime();
+    }
+
+    /**
+     * Activer un défi
+     */
+    public function defiActiver(string $id): JsonResponse
+    {
+        $defi = Defi::findOrFail($id);
+        $defi->update(['est_actif' => true]);
+
+        return $this->reponseSucces([
+            'message' => 'Défi activé avec succès',
+            'defi' => $defi->fresh(),
+        ]);
+    }
+
+    /**
+     * Désactiver un défi
+     */
+    public function defiDesactiver(string $id): JsonResponse
+    {
+        $defi = Defi::findOrFail($id);
+        $defi->update(['est_actif' => false]);
+
+        return $this->reponseSucces([
+            'message' => 'Défi désactivé avec succès',
+            'defi' => $defi->fresh(),
+        ]);
+    }
+
+    /**
+     * Participations d'un défi
+     */
+    public function defiParticipations(string $id): JsonResponse
+    {
+        $defi = Defi::findOrFail($id);
+        $participations = $defi->participants()->get()->map(function ($p) {
+            return [
+                'id' => $p->id,
+                'utilisateur' => [
+                    'id' => $p->id,
+                    'prenom' => $p->prenom,
+                    'nom' => $p->nom,
+                ],
+                'statut' => $p->pivot->statut,
+                'score' => $p->pivot->score,
+                'soumis_a' => $p->pivot->soumis_a,
+            ];
+        });
+
+        return $this->reponseSucces(['participations' => $participations]);
+    }
+
+    // ==================== BADGES ====================
+
+    /**
+     * Liste de tous les badges
+     */
+    public function badgesIndex(Request $requete): JsonResponse
+    {
+        $badges = Badge::withCount('utilisateurs')->orderBy('nom')->get();
+
+        return $this->reponseSucces(['badges' => $badges]);
+    }
+
+    /**
+     * Créer un badge
+     */
+    public function badgeCreer(Request $requete): JsonResponse
+    {
+        $requete->validate([
+            'nom' => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'icone' => 'nullable|string|max:50',
+            'condition' => 'nullable|string',
+        ]);
+
+        $badge = Badge::create([
+            'nom' => $requete->nom,
+            'slug' => \Illuminate\Support\Str::slug($requete->nom),
+            'description' => $requete->description,
+            'icone' => $requete->icone,
+            'conditions_obtention' => $requete->condition ? ['description' => $requete->condition] : null,
+        ]);
+
+        return $this->reponseCree([
+            'message' => 'Badge créé avec succès',
+            'badge' => $badge,
+        ]);
+    }
+
+    /**
+     * Afficher un badge
+     */
+    public function badgeAfficher(string $id): JsonResponse
+    {
+        $badge = Badge::withCount('utilisateurs')->findOrFail($id);
+
+        return $this->reponseSucces(['badge' => $badge]);
+    }
+
+    /**
+     * Mettre à jour un badge
+     */
+    public function badgeMettreAJour(Request $requete, string $id): JsonResponse
+    {
+        $requete->validate([
+            'nom' => 'sometimes|string|max:255',
+            'description' => 'nullable|string',
+            'icone' => 'nullable|string|max:50',
+            'condition' => 'nullable|string',
+        ]);
+
+        $badge = Badge::findOrFail($id);
+        $data = $requete->only(['nom', 'description', 'icone']);
+        if ($requete->has('condition')) {
+            $data['conditions_obtention'] = ['description' => $requete->condition];
+        }
+        $badge->update($data);
+
+        return $this->reponseSucces([
+            'message' => 'Badge mis à jour avec succès',
+            'badge' => $badge->fresh(),
+        ]);
+    }
+
+    /**
+     * Supprimer un badge
+     */
+    public function badgeSupprimer(string $id): JsonResponse
+    {
+        $badge = Badge::findOrFail($id);
+        $badge->delete();
+
+        return $this->reponseSupprime();
+    }
+
+    /**
+     * Attribuer un badge à un utilisateur
+     */
+    public function badgeAttribuer(string $id, string $utilisateurId): JsonResponse
+    {
+        $badge = Badge::findOrFail($id);
+        $utilisateur = Utilisateur::findOrFail($utilisateurId);
+
+        $existe = DB::table('badges_utilisateurs')
+            ->where('utilisateur_id', $utilisateurId)
+            ->where('badge_id', $id)
+            ->exists();
+
+        if (!$existe) {
+            DB::table('badges_utilisateurs')->insert([
+                'id' => (string) Str::uuid(),
+                'utilisateur_id' => $utilisateurId,
+                'badge_id' => $id,
+                'obtenu_a' => now(),
+                'raison_obtention' => 'Attribué par un administrateur',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]);
+        }
+
+        return $this->reponseSucces([
+            'message' => "Badge '{$badge->nom}' attribué à {$utilisateur->prenom} {$utilisateur->nom}",
+        ]);
+    }
+
+    /**
+     * Retirer un badge d'un utilisateur
+     */
+    public function badgeRetirer(string $id, string $utilisateurId): JsonResponse
+    {
+        $badge = Badge::findOrFail($id);
+        Utilisateur::findOrFail($utilisateurId);
+
+        $badge->utilisateurs()->detach($utilisateurId);
+
+        return $this->reponseSucces([
+            'message' => 'Badge retiré avec succès',
+        ]);
     }
 }

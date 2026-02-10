@@ -3,7 +3,7 @@
 import { ReactNode } from "react";
 import { useRequireAuth } from "@/hooks/use-auth";
 import { useAuthStore } from "@/stores/auth-store";
-import { Loader2, LayoutDashboard, BookOpen, Code, MessageSquare, Trophy, User } from "lucide-react";
+import { Loader2, LayoutDashboard, BookOpen, Code, MessageSquare, Trophy, User, Swords, BrainCircuit, Bell, Users, HelpCircle, Mail } from "lucide-react";
 import { AppSidebar, NavItem } from "@/components/app-sidebar";
 import { HeaderUser } from "@/components/header-user";
 import {
@@ -23,8 +23,14 @@ const etudiantNavItems: NavItem[] = [
   { url: "/etudiant", title: "Tableau de bord", icon: LayoutDashboard },
   { url: "/etudiant/parcours", title: "Mes parcours", icon: BookOpen },
   { url: "/etudiant/projets", title: "Projets", icon: Code },
+  { url: "/etudiant/defis", title: "Défis", icon: Swords },
+  { url: "/etudiant/quiz", title: "Quiz", icon: HelpCircle },
+  { url: "/etudiant/competences", title: "Compétences", icon: BrainCircuit },
   { url: "/etudiant/badges", title: "Badges", icon: Trophy },
-  { url: "/etudiant/messages", title: "Messages", icon: MessageSquare },
+  { url: "/etudiant/mentorat", title: "Mentorat", icon: Users },
+  { url: "/etudiant/notifications", title: "Notifications", icon: Bell },
+  { url: "/forum", title: "Forum", icon: MessageSquare },
+  { url: "/messagerie", title: "Messagerie", icon: Mail },
   { url: "/etudiant/profil", title: "Mon profil", icon: User },
 ];
 

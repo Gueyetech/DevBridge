@@ -80,12 +80,4 @@ class DiscussionForum extends Model
     {
         return $this->hasMany(LikeForum::class, 'discussion_id');
     }
-
-    /**
-     * Les vues de la discussion
-     */
-    public function vues(): HasMany
-    {
-        return $this->hasMany(VueForum::class, 'discussion_id');
-    }
 }

@@ -418,4 +418,85 @@ class ControleurGestionUtilisateurs extends ControleurApiBase
             'derniers_3_mois' => Utilisateur::where('derniere_connexion', '>=', now()->subDays(90))->count(),
         ];
     }
+
+    // ==================== GESTION DES MENTORS ====================
+
+    /**
+     * Liste de tous les mentors
+     */
+    public function mentorsIndex(Request $requete): JsonResponse
+    {
+        $mentors = Utilisateur::where('role', RoleUtilisateur::MENTOR->value)
+            ->get()
+            ->map(function ($m) {
+                return [
+                    'id' => $m->id,
+                    'prenom' => $m->prenom,
+                    'nom' => $m->nom,
+                    'email' => $m->email,
+                    'avatar' => $m->avatar,
+                    'specialites' => $m->specialites ?? [],
+                    'valide' => $m->est_actif ?? true,
+                    'nombre_etudiants' => $m->mentorats ? $m->mentorats->count() : 0,
+                    'created_at' => $m->created_at,
+                ];
+            });
+
+        return $this->reponseSucces(['mentors' => $mentors]);
+    }
+
+    /**
+     * Valider un mentor
+     */
+    public function mentorValider(string $id): JsonResponse
+    {
+        $utilisateur = Utilisateur::findOrFail($id);
+        $utilisateur->update([
+            'role' => RoleUtilisateur::MENTOR->value,
+            'est_actif' => true,
+        ]);
+
+        return $this->reponseSucces([
+            'message' => "L'utilisateur {$utilisateur->prenom} {$utilisateur->nom} a été validé comme mentor.",
+        ]);
+    }
+
+    /**
+     * Révoquer un mentor
+     */
+    public function mentorRevoquer(string $id): JsonResponse
+    {
+        $utilisateur = Utilisateur::findOrFail($id);
+        $utilisateur->update([
+            'role' => RoleUtilisateur::ETUDIANT->value,
+        ]);
+
+        return $this->reponseSucces([
+            'message' => "Le rôle mentor de {$utilisateur->prenom} {$utilisateur->nom} a été révoqué.",
+        ]);
+    }
+
+    /**
+     * Demandes de mentorat en attente
+     */
+    public function mentorsDemandes(): JsonResponse
+    {
+        // Users who requested to become mentors but aren't validated yet
+        $demandes = Utilisateur::where('role', RoleUtilisateur::MENTOR->value)
+            ->where(function ($q) {
+                $q->where('est_actif', false)->orWhereNull('est_actif');
+            })
+            ->get()
+            ->map(function ($u) {
+                return [
+                    'id' => $u->id,
+                    'prenom' => $u->prenom,
+                    'nom' => $u->nom,
+                    'email' => $u->email,
+                    'created_at' => $u->created_at,
+                ];
+            });
+
+        return $this->reponseSucces(['demandes' => $demandes]);
+    }
 }

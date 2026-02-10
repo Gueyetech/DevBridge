@@ -9,7 +9,7 @@ use App\Http\Controllers\Api\V1\Commun\{
 };
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('auth:sanctum')->group(function () {
+Route::middleware('auth:sanctum')->prefix('commun')->group(function () {
     
     // ==================== PROFIL ====================
     Route::prefix('profil')->group(function () {

@@ -547,7 +547,7 @@ export default function StatistiquesPage() {
                           variant="outline"
                           className="text-base px-4 py-2 font-semibold border-2 border-primary/40 bg-primary/10 text-primary shadow"
                         >
-                          {typeof count === 'object' && count !== null && 'total' in count ? count.total : count}
+                          {typeof count === 'object' && count !== null && 'total' in count ? (count as any).total : count}
                         </Badge>
                       </div>
                     );

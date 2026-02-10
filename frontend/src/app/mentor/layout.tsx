@@ -3,7 +3,7 @@
 import { ReactNode } from "react";
 import { useRequireAuth } from "@/hooks/use-auth";
 import { useAuthStore } from "@/stores/auth-store";
-import { Loader2, LayoutDashboard, Users, Calendar, MessageSquare, FileText } from "lucide-react";
+import { Loader2, LayoutDashboard, Users, Calendar, MessageSquare, FileText, BrainCircuit, Clock, TrendingUp, User, Mail } from "lucide-react";
 import { AppSidebar, NavItem } from "@/components/app-sidebar";
 import { HeaderUser } from "@/components/header-user";
 import {
@@ -24,8 +24,13 @@ const mentorNavItems: NavItem[] = [
   { url: "/mentor/demandes", title: "Demandes", icon: MessageSquare },
   { url: "/mentor/etudiants", title: "Étudiants", icon: Users },
   { url: "/mentor/sessions", title: "Sessions", icon: Calendar },
-  { url: "/mentor/competences", title: "Compétences", icon: FileText },
-  { url: "/mentor/disponibilites", title: "Disponibilités", icon: Calendar },
+  { url: "/mentor/competences", title: "Compétences", icon: BrainCircuit },
+  { url: "/mentor/disponibilites", title: "Disponibilités", icon: Clock },
+  { url: "/mentor/feedback", title: "Feedback", icon: FileText },
+  { url: "/mentor/rapports", title: "Rapports", icon: TrendingUp },
+  { url: "/forum", title: "Forum", icon: MessageSquare },
+  { url: "/messagerie", title: "Messagerie", icon: Mail },
+  { url: "/mentor/profil", title: "Mon profil", icon: User },
 ];
 
 export default function MentorLayout({ children }: { children: ReactNode }) {

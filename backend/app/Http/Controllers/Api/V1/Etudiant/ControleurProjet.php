@@ -32,10 +32,10 @@ class ControleurProjet extends ControleurApiBase
             ->orderByDesc('created_at')
             ->paginate($requete->input('par_page', 15));
 
-        return $this->reponseSucces(
-            ProjetRessource::collection($projets),
-            'Projets récupérés avec succès'
-        );
+        return $this->reponseSucces([
+            'projets' => ProjetRessource::collection($projets),
+            'message' => 'Projets récupérés avec succès'
+        ], 200);
     }
 
     /**
@@ -46,10 +46,10 @@ class ControleurProjet extends ControleurApiBase
         $projet = Projet::with(['createur', 'membres.utilisateur', 'taches.assignee'])
             ->findOrFail($id);
 
-        return $this->reponseSucces(
-            new ProjetRessource($projet),
-            'Projet récupéré avec succès'
-        );
+        return $this->reponseSucces([
+            'projet' => new ProjetRessource($projet),
+            'message' => 'Projet récupéré avec succès'
+        ], 200);
     }
 
     /**

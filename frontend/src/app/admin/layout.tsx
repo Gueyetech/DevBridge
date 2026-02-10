@@ -3,7 +3,7 @@
 import { ReactNode } from "react";
 import { useRequireAuth } from "@/hooks/use-auth";
 import { useAuthStore } from "@/stores/auth-store";
-import { Loader2, LayoutDashboard, Users, BookOpen, BarChart, Settings } from "lucide-react";
+import { Loader2, LayoutDashboard, Users, BookOpen, BarChart, Settings, FolderKanban, BrainCircuit, Swords, Trophy, UserCheck, MessageSquare, Mail } from "lucide-react";
 import { AppSidebar, NavItem } from "@/components/app-sidebar";
 import { HeaderUser } from "@/components/header-user";
 import {
@@ -23,7 +23,14 @@ const adminNavItems: NavItem[] = [
   { url: "/admin", title: "Tableau de bord", icon: LayoutDashboard },
   { url: "/admin/utilisateurs", title: "Utilisateurs", icon: Users },
   { url: "/admin/parcours", title: "Parcours", icon: BookOpen },
+  { url: "/admin/projets", title: "Projets", icon: FolderKanban },
+  { url: "/admin/competences", title: "Compétences", icon: BrainCircuit },
+  { url: "/admin/defis", title: "Défis", icon: Swords },
+  { url: "/admin/badges", title: "Badges", icon: Trophy },
+  { url: "/admin/mentors", title: "Mentors", icon: UserCheck },
   { url: "/admin/statistiques", title: "Statistiques", icon: BarChart },
+  { url: "/forum", title: "Forum", icon: MessageSquare },
+  { url: "/messagerie", title: "Messagerie", icon: Mail },
   { url: "/admin/parametres", title: "Paramètres", icon: Settings },
 ];
 

@@ -12,6 +12,8 @@ use App\Models\TentativeQuiz;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 use Carbon\Carbon;
 
 class ControleurQuiz extends ControleurApiBase
@@ -220,14 +222,34 @@ class ControleurQuiz extends ControleurApiBase
             $parcours = $quiz->module->parcours;
             if ($parcours && $parcours->competences_acquises) {
                 foreach ($parcours->competences_acquises as $competenceId) {
-                    $utilisateur->competences()->syncWithoutDetaching([
-                        $competenceId => [
+                    $existe = DB::table('competences_utilisateurs')
+                        ->where('utilisateur_id', $utilisateur->id)
+                        ->where('competence_id', $competenceId)
+                        ->exists();
+
+                    if ($existe) {
+                        DB::table('competences_utilisateurs')
+                            ->where('utilisateur_id', $utilisateur->id)
+                            ->where('competence_id', $competenceId)
+                            ->update([
+                                'valide_a' => now(),
+                                'methode_validation' => 'quiz',
+                                'niveau_maitrise' => 1,
+                                'updated_at' => now(),
+                            ]);
+                    } else {
+                        DB::table('competences_utilisateurs')->insert([
+                            'id' => (string) Str::uuid(),
+                            'utilisateur_id' => $utilisateur->id,
+                            'competence_id' => $competenceId,
                             'valide_a' => now(),
-                            'valide_par' => null, // Auto-validé
+                            'valide_par' => null,
                             'methode_validation' => 'quiz',
                             'niveau_maitrise' => 1,
-                        ],
-                    ]);
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ]);
+                    }
                 }
             }
         }

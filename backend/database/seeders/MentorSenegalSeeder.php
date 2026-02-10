@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Hash;
 use Carbon\Carbon;
 
 class MentorSenegalSeeder extends Seeder
+ 
 {
     // Nettoyage pour éviter les doublons
         public function run(): void
@@ -89,7 +90,8 @@ class MentorSenegalSeeder extends Seeder
                 ]);
             }
             foreach ($nomsMentors as $i => $user) {
-                $mentor_id = Str::uuid();
+                // Utiliser l'ID fourni pour le mentor de test
+                $mentor_id = ($i === 0) ? 'fb77de64-a426-4028-a60b-13d407d809eb' : Str::uuid();
                 $email = strtolower($user['prenom'] . '.' . $user['nom']) . '@devbridge.sn';
                 DB::table('utilisateurs')->insert([
                     'id' => $mentor_id,
@@ -138,23 +140,110 @@ class MentorSenegalSeeder extends Seeder
                             ]);
                         }
                     }
-                    // Sessions de mentorat fictives
-                    for ($s = 0; $s < rand(1, 2); $s++) {
-                        $session_id = Str::uuid();
-                        $date_debut = Carbon::now()->subDays(rand(1, 20))->setTime(rand(8, 16), rand(0, 59));
-                        $date_fin = (clone $date_debut)->addMinutes(rand(30, 90));
-                        DB::table('sessions_mentorat')->insert([
-                            'id' => $session_id,
-                            'mentorat_id' => $mentorat_id,
-                            'titre' => 'Session mentorat',
-                            'description' => 'Session de suivi et d’accompagnement',
-                            'date_debut' => $date_debut,
-                            'date_fin' => $date_fin,
-                            'statut' => 'termine',
-                            'created_at' => $date_debut,
-                            'updated_at' => $date_fin,
-                        ]);
-                    }
+                    // Sessions de mentorat fictives pour tous les statuts autorisés (planifie, en_cours, annule, termine)
+                    $date_debut = Carbon::now()->subDays(2)->setTime(10, 0);
+                    $date_fin = (clone $date_debut)->addMinutes(60);
+                    // 1. Session planifiée
+                    DB::table('sessions_mentorat')->insert([
+                        'id' => Str::uuid(),
+                        'mentorat_id' => $mentorat_id,
+                        'titre' => 'Session planifiée',
+                        'description' => 'Session à venir',
+                        'date_debut' => Carbon::now()->addDays(2)->setTime(14, 0),
+                        'date_fin' => Carbon::now()->addDays(2)->setTime(15, 0),
+                        'statut' => 'planifie',
+                        'created_at' => Carbon::now()->addDays(2)->setTime(14, 0),
+                        'updated_at' => Carbon::now()->addDays(2)->setTime(14, 0),
+                    ]);
+                    // 2. Session en cours (date_fin requis, donc on met la même valeur que date_debut)
+                    $date_en_cours = Carbon::now()->setTime(9, 0);
+                    DB::table('sessions_mentorat')->insert([
+                        'id' => Str::uuid(),
+                        'mentorat_id' => $mentorat_id,
+                        'titre' => 'Session en cours',
+                        'description' => 'Session en cours',
+                        'date_debut' => $date_en_cours,
+                        'date_fin' => $date_en_cours, // valeur factice pour respecter la contrainte NOT NULL
+                        'statut' => 'en_cours',
+                        'created_at' => $date_en_cours,
+                        'updated_at' => $date_en_cours,
+                    ]);
+                    // 3. Session annulée
+                    DB::table('sessions_mentorat')->insert([
+                        'id' => Str::uuid(),
+                        'mentorat_id' => $mentorat_id,
+                        'titre' => 'Session annulée',
+                        'description' => 'Session annulée par le mentor',
+                        'date_debut' => Carbon::now()->subDays(1)->setTime(11, 0),
+                        'date_fin' => Carbon::now()->subDays(1)->setTime(12, 0),
+                        'statut' => 'annule',
+                        'created_at' => Carbon::now()->subDays(1)->setTime(11, 0),
+                        'updated_at' => Carbon::now()->subDays(1)->setTime(11, 0),
+                    ]);
+                    // 4. Session terminée
+                    DB::table('sessions_mentorat')->insert([
+                        'id' => Str::uuid(),
+                        'mentorat_id' => $mentorat_id,
+                        'titre' => 'Session terminée',
+                        'description' => 'Session de suivi et d’accompagnement',
+                        'date_debut' => $date_debut,
+                        'date_fin' => $date_fin,
+                        'statut' => 'termine',
+                        'created_at' => $date_debut,
+                        'updated_at' => $date_fin,
+                    ]);
+                                       // Sessions supplémentaires pour chaque mentorat
+                    // Session planifiée future
+                    DB::table('sessions_mentorat')->insert([
+                        'id' => Str::uuid(),
+                        'mentorat_id' => $mentorat_id,
+                        'titre' => 'Session planifiée avancée',
+                        'description' => 'Session planifiée dans 1 semaine',
+                        'date_debut' => Carbon::now()->addDays(7)->setTime(15, 0),
+                        'date_fin' => Carbon::now()->addDays(7)->setTime(16, 0),
+                        'statut' => 'planifie',
+                        'created_at' => Carbon::now()->addDays(7)->setTime(15, 0),
+                        'updated_at' => Carbon::now()->addDays(7)->setTime(15, 0),
+                    ]);
+                    // Session en cours supplémentaire
+                    $date_en_cours2 = Carbon::now()->addDays(1)->setTime(10, 30);
+                    DB::table('sessions_mentorat')->insert([
+                        'id' => Str::uuid(),
+                        'mentorat_id' => $mentorat_id,
+                        'titre' => 'Session en cours bis',
+                        'description' => 'Session en cours supplémentaire',
+                        'date_debut' => $date_en_cours2,
+                        'date_fin' => $date_en_cours2,
+                        'statut' => 'en_cours',
+                        'created_at' => $date_en_cours2,
+                        'updated_at' => $date_en_cours2,
+                    ]);
+                    // Session annulée supplémentaire
+                    DB::table('sessions_mentorat')->insert([
+                        'id' => Str::uuid(),
+                        'mentorat_id' => $mentorat_id,
+                        'titre' => 'Session annulée bis',
+                        'description' => 'Session annulée pour indisponibilité',
+                        'date_debut' => Carbon::now()->subDays(3)->setTime(13, 0),
+                        'date_fin' => Carbon::now()->subDays(3)->setTime(14, 0),
+                        'statut' => 'annule',
+                        'created_at' => Carbon::now()->subDays(3)->setTime(13, 0),
+                        'updated_at' => Carbon::now()->subDays(3)->setTime(13, 0),
+                    ]);
+                    // Session terminée supplémentaire
+                    $date_terminee2 = Carbon::now()->subDays(5)->setTime(17, 0);
+                    $date_terminee2_fin = (clone $date_terminee2)->addMinutes(90);
+                    DB::table('sessions_mentorat')->insert([
+                        'id' => Str::uuid(),
+                        'mentorat_id' => $mentorat_id,
+                        'titre' => 'Session terminée bis',
+                        'description' => 'Session terminée supplémentaire',
+                        'date_debut' => $date_terminee2,
+                        'date_fin' => $date_terminee2_fin,
+                        'statut' => 'termine',
+                        'created_at' => $date_terminee2,
+                        'updated_at' => $date_terminee2_fin,
+                    ]);
                 }
             }
         }
